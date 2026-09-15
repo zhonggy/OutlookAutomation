@@ -11,13 +11,18 @@ from __future__ import annotations
 
 import copy
 import os
+import sys
 import threading
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if getattr(sys, "frozen", False):
+    # PyInstaller 打包后：以 exe 所在目录为项目根（data/logs/profiles 都写在 exe 旁边）
+    PROJECT_ROOT = Path(sys.executable).resolve().parent
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config" / "config.yaml"
 
 ENV_PREFIX = "OA_"

@@ -33,3 +33,4 @@ browsers/
 build/
 dist/
 *.egg-info/
+release/
