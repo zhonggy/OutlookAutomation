@@ -66,6 +66,23 @@ jobs:
           python -m pip install -r requirements.txt pyinstaller
       - name: PyInstaller 打包
         run: python -m PyInstaller outlook.spec --distpath release --workpath build/pyi --noconfirm
+      - name: 下载并装入 fingerprint-chromium 内核（148.0.7778.215，与本地一致）
+        # 注意：必须在 PyInstaller 之后拷贝（--noconfirm 会清空 release/OutlookAutomation）
+        shell: pwsh
+        run: |
+          $url = "https://github.com/adryfish/fingerprint-chromium/releases/download/148.0.7778.215/ungoogled-chromium_148.0.7778.215-1.1_windows_x64.zip"
+          Invoke-WebRequest -Uri $url -OutFile chromium.zip
+          Expand-Archive -Path chromium.zip -DestinationPath chromium_extract -Force
+          New-Item -ItemType Directory -Force -Path "release/OutlookAutomation/browsers/fingerprint-chromium" | Out-Null
+          Get-ChildItem -Path "chromium_extract" -Directory | ForEach-Object {
+            Copy-Item -Recurse -Force $_.FullName "release/OutlookAutomation/browsers/fingerprint-chromium/"
+          }
+          Remove-Item -Recurse -Force chromium.zip, chromium_extract
+          Get-ChildItem -Recurse "release/OutlookAutomation/browsers" -Filter chrome.exe | Select-Object FullName
+      - name: 复制可编辑配置到 exe 旁边
+        run: |
+          New-Item -ItemType Directory -Force -Path "release/OutlookAutomation/config" | Out-Null
+          Copy-Item -Force "config/config.yaml" "release/OutlookAutomation/config/config.yaml"
       - name: 压缩为 zip
         shell: pwsh
         run: Compress-Archive -Path release/OutlookAutomation -DestinationPath release/OutlookAutomation-windows-x64.zip

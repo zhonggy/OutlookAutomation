@@ -23,7 +23,13 @@ if getattr(sys, "frozen", False):
     PROJECT_ROOT = Path(sys.executable).resolve().parent
 else:
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# 打包后 config/config.yaml 在 exe 旁边（spec 里 datas 输出到 exe 同级的 config/）
+# 若不存在（比如用户删了配置），回退到内置默认值（_internal/config/config.yaml）
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config" / "config.yaml"
+_BUNDLED_CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
+if not DEFAULT_CONFIG_PATH.is_file() and _BUNDLED_CONFIG_PATH.is_file():
+    DEFAULT_CONFIG_PATH = _BUNDLED_CONFIG_PATH
 
 ENV_PREFIX = "OA_"
 

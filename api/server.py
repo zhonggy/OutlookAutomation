@@ -144,8 +144,13 @@ class WorkerProcessManager:
         out_f = open(log_dir / "worker.out", "ab")
         err_f = open(log_dir / "worker.err", "ab")
         creationflags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+        if getattr(sys, "frozen", False):
+            # PyInstaller 打包后：直接用 exe 自身拉起 work（main.py 不存在）
+            worker_cmd = [sys.executable, "work", "--workers", str(n)]
+        else:
+            worker_cmd = [sys.executable, str(self.cfg.root / "main.py"), "work", "--workers", str(n)]
         self.proc = subprocess.Popen(
-            [sys.executable, str(self.cfg.root / "main.py"), "work", "--workers", str(n)],
+            worker_cmd,
             cwd=str(self.cfg.root),
             stdout=out_f,
             stderr=err_f,

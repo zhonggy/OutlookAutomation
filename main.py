@@ -50,6 +50,15 @@ def cmd_serve(args) -> int:
     if args.no_auth:
         cfg.set("api.auth_enabled", False)
         log.warn("serve", "已通过 --no-auth 关闭接口认证，同机任意进程可下发任务")
+    if getattr(args, "open", False):
+        import threading
+        import webbrowser
+
+        def _open_later():
+            port = int(cfg.get("api.port", 8000))
+            webbrowser.open(f"http://127.0.0.1:{port}")
+
+        threading.Timer(1.2, _open_later).start()
     run_server(cfg)
     return 0
 
@@ -317,6 +326,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--host", default=None, help="监听地址（默认 127.0.0.1，不建议修改）")
     p.add_argument("--port", type=int, default=None)
     p.add_argument("--no-auth", action="store_true", help="关闭 Token 认证（不推荐）")
+    p.add_argument("--open", action="store_true", help="启动后自动打开浏览器（打包版双击默认开启）")
     p.set_defaults(func=cmd_serve)
 
     p = sub.add_parser("import", help="导入账号文件")
@@ -366,6 +376,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[list] = None) -> int:
+    # 打包版双击 exe（无任何命令行参数）→ 直接启动管理面板并自动打开浏览器，避免“闪退”
+    no_args = (len(sys.argv) <= 1) if argv is None else (len(argv) == 0)
+    if no_args and getattr(sys, "frozen", False):
+        parser = build_parser()
+        args = parser.parse_args(["serve", "--open"])
+        try:
+            return args.func(args)
+        except KeyboardInterrupt:
+            print("\n已中断")
+            return 130
+
     parser = build_parser()
     args = parser.parse_args(argv)
     if not getattr(args, "func", None):

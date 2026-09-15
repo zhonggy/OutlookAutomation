@@ -140,10 +140,26 @@ class BrowserSession:
         executable_path = str(browser_cfg.get("executable_path") or "").strip()
         if executable_path:
             import os
+            import sys
+            from pathlib import Path as _Path
 
-            if not os.path.isfile(executable_path):
-                raise BrowserLaunchError(f"浏览器可执行文件不存在: {executable_path}")
-            common["executable_path"] = executable_path
+            # 相对路径统一相对项目根（exe 所在目录）解析，避免受工作目录影响
+            cand = _Path(executable_path)
+            if not cand.is_absolute():
+                from config import PROJECT_ROOT
+
+                cand = PROJECT_ROOT / executable_path
+            # 打包版（PyInstaller onedir）：资源在 _internal/ 下，再探测一次
+            if not cand.is_file() and getattr(sys, "frozen", False):
+                bundled = _Path(__file__).resolve().parent.parent / executable_path
+                if bundled.is_file():
+                    cand = bundled
+            if not cand.is_file():
+                raise BrowserLaunchError(
+                    f"浏览器可执行文件不存在: {cand}\n"
+                    f"请先执行: patchright install chromium，或修改 config.yaml 的 browser.executable_path"
+                )
+            common["executable_path"] = str(cand)
 
         ctx_opts = build_context_options(
             locale=locale,
