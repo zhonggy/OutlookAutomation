@@ -1,0 +1,8 @@
+include README.md
+include requirements.txt
+include install.bat
+include start.bat
+recursive-include config *.yaml
+recursive-include api/static *.html
+recursive-include scripts *.py
+recursive-include tests *.py

@@ -28,3 +28,8 @@ _smoke_*.py
 
 # fingerprint-chromium 内核（第三方大体积二进制，不入库）
 browsers/
+
+# 构建产物
+build/
+dist/
+*.egg-info/
